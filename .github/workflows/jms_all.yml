@@ -11,7 +11,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build Docker Image
-      run: docker build . --file ./allinone/Dockerfile --tag jumpserver/jms_all:dev
+      run: docker build . --file ./dev/Dockerfile --tag jumpserver/jms_all:dev
     - name: Logo into registry
       run: echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u fit2bot --password-stdin
     - name: Push image
