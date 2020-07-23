@@ -1,13 +1,36 @@
+FROM golang:1.12-alpine as koko-build
+LABEL stage=stage-build
+ARG GOPROXY
+ARG VERSION
+ENV GOPROXY=$GOPROXY
+ENV VERSION=$VERSION
+ENV GO111MODULE=on
+ENV GOOS=linux
+ENV GOARCH=amd64
+ENV CGO_ENABLED=0
+
+RUN apk add git && cd /opt && git clone -b dev https://github.com/jumpserver/koko.git && cd koko && cd utils && sh -ixeu build.sh
+
+FROM node:10 as lina-build
+ARG VERSION
+ENV VERSION=$VERSION
+
+RUN apk add git && cd /opt && git clone -b dev https://github.com/jumpserver/lina.git && mkdir /data && mv /opt/lina/* /data/ && cd /data && cd utils && bash -xieu build.sh
+
+FROM node:10 as luna-build
+ARG VERSION
+ENV VERSION=$VERSION
+
+RUN apk add git && cd /opt && git clone -b dev https://github.com/jumpserver/luna.git && mkdir /data && mv /opt/luna/* /data/ && cd /data && cd utils && bash -ixeu build.sh
+
 FROM centos:7
 WORKDIR /opt
-ARG Version=v2.1.0
-ENV Version=${Version} \
-    LANG=en_US.utf8
+ENV LANG=en_US.utf8
 
 RUN set -ex \
     && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && echo "LANG=en_US.utf8" > /etc/locale.conf \
-    && yum -y install wget gcc epel-release git yum-utils \
+    && yum -y install wget gcc epel-release git yum-utils unzip \
     && yum -y install python36 python36-devel \
     && yum -y localinstall --nogpgcheck https://mirrors.aliyun.com/rpmfusion/free/el/rpmfusion-free-release-7.noarch.rpm https://mirrors.aliyun.com/rpmfusion/nonfree/el/rpmfusion-nonfree-release-7.noarch.rpm \
     && yum install -y java-1.8.0-openjdk \
@@ -34,28 +57,18 @@ RUN set -ex \
     && rm -rf /var/cache/yum/*
 
 RUN set -ex \
-    && wget https://github.com/jumpserver/jumpserver/releases/download/${Version}/jumpserver-${Version}.tar.gz \
-    && tar -xf jumpserver-${Version}.tar.gz \
-    && mv jumpserver-${Version} jumpserver \
-    && wget https://github.com/jumpserver/koko/releases/download/${Version}/koko-${Version}-linux-amd64.tar.gz \
-    && tar -xf koko-${Version}-linux-amd64.tar.gz \
-    && mv koko-${Version}-linux-amd64 koko \
-    && wget -O guacamole-${Version}.tar.gz https://github.com/jumpserver/docker-guacamole/archive/${Version}.tar.gz \
-    && mkdir /opt/guacamole \
-    && tar -xf guacamole-${Version}.tar.gz -C /opt/guacamole --strip-components 1 \
-    && wget https://github.com/jumpserver/lina/releases/download/${Version}/lina-${Version}.tar.gz \
-    && tar -xf lina-${Version}.tar.gz \
-    && mv lina-${Version} lina \
-    && wget https://github.com/jumpserver/luna/releases/download/${Version}/luna-${Version}.tar.gz \
-    && tar -xf luna-${Version}.tar.gz \
-    && mv luna-${Version} luna \
+    && wget -O /opt/jumpserver-dev.zip https://github.com/jumpserver/jumpserver/archive/dev.zip \
+    && unzip jumpserver-dev.zip \
+    && mv jumpserver-dev jumpserver \
     && yum -y install $(cat /opt/jumpserver/requirements/rpm_requirements.txt) \
     && python3.6 -m venv /opt/py3 \
-    && echo -e "[easy_install]\nindex_url = https://mirrors.aliyun.com/pypi/simple/" > ~/.pydistutils.cfg \
     && source /opt/py3/bin/activate \
     && pip install wheel \
     && pip install --upgrade pip setuptools \
     && pip install -r /opt/jumpserver/requirements/requirements.txt \
+    && wget -O /opt/guacamole-dev.zip https://github.com/jumpserver/docker-guacamole/archive/dev.zip \
+    && unzip guacamole-dev.zip \
+    && mv docker-guacamole guacamole \
     && cd guacamole \
     && tar -xf guacamole-server-1.2.0.tar.gz \
     && cd guacamole-server-1.2.0 \
@@ -79,6 +92,12 @@ RUN set -ex \
     && rm -rf /var/cache/yum/* \
     && rm -rf ~/.cache/pip
 
+COPY --from=koko-build /opt/koko/release/koko /opt/koko
+COPY --from=koko-build /usr/local/go/src/runtime/sys_linux_amd64.s /usr/local/go/src/runtime/sys_linux_amd64.s
+COPY --from=koko-build /opt/koko/tools/coredump.sh /opt/koko/
+COPY --from=koko-build /opt/koko/entrypoint.sh /opt/koko/
+COPY --from=lina-build /data/release/lina /opt/lina/
+COPY --from=luna-build /data/release/luna /opt/luna/
 COPY allinone/readme.txt readme.txt
 COPY allinone/entrypoint.sh .
 RUN chmod +x ./entrypoint.sh
