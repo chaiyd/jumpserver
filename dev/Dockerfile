@@ -89,6 +89,7 @@ RUN set -ex \
     && yum clean all \
     && rm -rf /var/cache/yum/* \
     && rm -rf /opt/*.tar.gz \
+    && rm -rf /opt/*.zip \
     && rm -rf /var/cache/yum/* \
     && rm -rf ~/.cache/pip
 
