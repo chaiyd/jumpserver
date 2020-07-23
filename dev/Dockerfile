@@ -68,7 +68,7 @@ RUN set -ex \
     && pip install -r /opt/jumpserver/requirements/requirements.txt \
     && wget -O /opt/guacamole-dev.zip https://github.com/jumpserver/docker-guacamole/archive/dev.zip \
     && unzip guacamole-dev.zip \
-    && mv docker-guacamole guacamole \
+    && mv docker-guacamole-dev guacamole \
     && cd guacamole \
     && tar -xf guacamole-server-1.2.0.tar.gz \
     && cd guacamole-server-1.2.0 \
