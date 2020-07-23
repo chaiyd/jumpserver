@@ -15,13 +15,13 @@ FROM node:10 as lina-build
 ARG VERSION
 ENV VERSION=$VERSION
 
-RUN apk add git && cd /opt && git clone -b dev https://github.com/jumpserver/lina.git && mkdir /data && mv /opt/lina/* /data/ && cd /data && cd utils && bash -xieu build.sh
+RUN apt-get update && apt-get -y install git && cd /opt && git clone -b dev https://github.com/jumpserver/lina.git && mkdir /data && mv /opt/lina/* /data/ && cd /data && cd utils && bash -xieu build.sh
 
 FROM node:10 as luna-build
 ARG VERSION
 ENV VERSION=$VERSION
 
-RUN apk add git && cd /opt && git clone -b dev https://github.com/jumpserver/luna.git && mkdir /data && mv /opt/luna/* /data/ && cd /data && cd utils && bash -ixeu build.sh
+RUN apt-get update && apt-get -y install git && cd /opt && git clone -b dev https://github.com/jumpserver/luna.git && mkdir /data && mv /opt/luna/* /data/ && cd /data && cd utils && bash -ixeu build.sh
 
 FROM centos:7
 WORKDIR /opt
