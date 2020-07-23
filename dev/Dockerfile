@@ -98,8 +98,8 @@ COPY --from=koko-build /opt/koko/tools/coredump.sh /opt/koko/
 COPY --from=koko-build /opt/koko/entrypoint.sh /opt/koko/
 COPY --from=lina-build /data/release/lina /opt/lina/
 COPY --from=luna-build /data/release/luna /opt/luna/
-COPY allinone/readme.txt readme.txt
-COPY allinone/entrypoint.sh .
+COPY dev/readme.txt readme.txt
+COPY dev/entrypoint.sh .
 RUN chmod +x ./entrypoint.sh
 
 VOLUME /opt/jumpserver/data
